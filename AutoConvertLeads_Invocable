@@ -1,0 +1,80 @@
+public class AutoConvertLeads_Invocable {
+    
+    public class AutoConverLeadInvocableRequest{
+        
+        
+        @InvocableVariable(label='Lead Record')
+        public Lead leadToConvert;
+        
+        @InvocableVariable(label='Contact Record')
+        public Contact contact;
+        
+        @InvocableVariable(label='Opportunity Name')
+        public string oppName;
+        
+        @InvocableVariable(label='Automation Name')
+        public string automationName;
+        
+        
+    }
+    
+    
+    
+    @InvocableMethod(label='Auto Convert Created Lead' description='auto convert created lead from Lead Creation Flow ')
+    public static void autoConvertLead(List<AutoConverLeadInvocableRequest> requests) {
+        
+        Map<Lead,ID> leadContMap = new Map<Lead,ID>();
+        
+        list<Lead> nonPearDeckLeadList = new list<Lead>();
+        
+        List<Contact> contList = new List<Contact>();
+        
+        List<Lead> leadList = new List<Lead>();
+        
+        for(AutoConverLeadInvocableRequest request : requests){
+            
+            if(request.automationName == 'Auto Convert Open Pipeline Lead'){
+                
+
+                Boolean pearDeckLead = request.leadToConvert.MQL_Reason__c.contains('Pear Deck');
+                
+                if(!pearDeckLead){
+                    
+                    nonPearDeckLeadList.add(request.leadToConvert);                
+                    system.debug('pearDeckLead: '+ pearDeckLead);
+                    
+                }
+                
+            }
+            
+            if(request.automationName == 'Auto Convert Lead From Lead Flow'){
+                
+                leadContMap.put(request.leadToConvert, request.contact.id);
+                
+                contList.add(request.contact);
+                leadList.add(request.leadToConvert);
+                  
+                
+            }
+   
+            
+        }
+        
+
+        //send lead to auto convert open pipeline leads apex - -AutoConvertLeads
+        if(nonPearDeckLeadList.size() > 0){
+            AutoConvertLeads.LeadAssign(nonPearDeckLeadList);
+        }
+        
+        if(contList.size() > 0 && leadList.size() > 0 && leadContMap != NULL){
+            
+            system.debug('yay');
+        }
+        
+    }
+   
+    
+    
+    
+    
+}
