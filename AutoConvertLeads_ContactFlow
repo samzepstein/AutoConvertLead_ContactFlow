@@ -1,0 +1,82 @@
+global class AutoConvertLeads_ContactFlow {
+    
+    global Map<Lead,ID> leadContMap = new Map<Lead,ID>();
+    
+    public List<Contact> contList = new List<Contact>();
+    
+    public List<Lead> leadList = new List<Lead>();
+    
+    public string oppName;
+    
+    
+    global AutoConvertLeads_ContactFlow(List<Lead> leadList, List<Contact> contList, String oppName, Map<Lead,ID> leadContMap){
+        
+        this.leadList = leadList;
+        this.contList = contList;
+        this.oppName = oppName;
+        this.leadContMap = leadContMap;
+        
+        
+    }
+    
+    
+    global static void convertLead(Map<Lead,ID> leadContMap, String oppName){
+        
+        
+        try{
+            LeadStatus CLeadStatus = [SELECT Id, MasterLabel FROM LeadStatus WHERE IsConverted=true Limit 1];
+            List<Database.LeadConvert> MassLeadconvert = new List<Database.LeadConvert>();
+            
+            for(Lead currentLead : leadContMap.keySet()){
+                
+                system.debug('currentLead: '+ currentLead);
+                
+                Database.LeadConvert Leadconvert = new Database.LeadConvert();
+                
+                
+                system.debug('leadContMap.get(currentLead): '+ leadContMap.get(currentLead));
+                
+                Leadconvert.setContactId(leadContMap.get(currentLead));
+                
+                
+                Leadconvert.setLeadId(currentlead.id);                
+                Leadconvert.setAccountId(currentlead.Account__c);
+                Leadconvert.setConvertedStatus(CLeadStatus.MasterLabel);
+                Leadconvert.setOpportunityName(oppName);
+                MassLeadconvert.add(Leadconvert);
+                
+            }
+            
+            
+            if (!MassLeadconvert.isEmpty()) {
+                List<Database.LeadConvertResult> lcr = Database.convertLead(MassLeadconvert);
+            }
+            
+            
+            
+            
+            
+        }
+        
+        catch(Exception e){
+            String sub3 = 'Exception Thrown - Fail to Convert Lead';
+            String body3 = 'Exception Thrown - Fail to Convert Lead: ' + e.getMessage() + '\n Stack Trace: ' + e.getStackTraceString();
+            errorHandler(sub3,body3);
+            
+        }
+        
+    }
+    
+    public static void errorHandler(String sub, String body){
+        
+        List<String> errorEmailList = new List<String>{'salesops@goguardian.com'};
+            Messaging.SingleEmailMessage msg = new Messaging.SingleEmailMessage();
+        
+        msg.setSubject(sub);
+        msg.setToAddresses(errorEmailList);
+        msg.setPlainTextBody(body);
+        Messaging.sendEmail(new List<Messaging.SingleEmailMessage> { msg }, false);
+        
+    }
+    
+}
