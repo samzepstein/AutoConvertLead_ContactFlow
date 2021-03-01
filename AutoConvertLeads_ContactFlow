@@ -1,4 +1,6 @@
-global class AutoConvertLeads_ContactFlow implements Database.Batchable<SObject>{
+global class AutoConvertLeads_ContactFlow implements Database.Batchable<SObject>, Database.Stateful{
+    
+    public Map<ID,AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest> request;
     
     
     public AutoConvertLeads_ContactFlow(Map<ID,AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest> request){
@@ -10,7 +12,7 @@ global class AutoConvertLeads_ContactFlow implements Database.Batchable<SObject>
         
         SET<ID> leadList = request.keySet();
         
-        String lead = 'SELECT ID FROM LEAD WHERE Id IN :cmRequestMapSet';
+        String lead = 'SELECT ID, Account__c FROM LEAD WHERE Id IN :leadList';
         
         
         return Database.getQueryLocator(lead);
@@ -23,36 +25,47 @@ global class AutoConvertLeads_ContactFlow implements Database.Batchable<SObject>
         try{
             
             
+            system.debug('scope: '+ scope);
             
             LeadStatus CLeadStatus = [SELECT Id, MasterLabel FROM LeadStatus WHERE IsConverted=true Limit 1];
             List<Database.LeadConvert> MassLeadconvert = new List<Database.LeadConvert>();
             
             for(Lead currentLead : scope){
                 
-                AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest acr = request.get(currentLead);
+                AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest acr = request.get(currentLead.id);
                 
                 system.debug('currentLead: '+ currentLead);
                 
                 Database.LeadConvert Leadconvert = new Database.LeadConvert();
                 
                 
-                system.debug('leadContMap.get(currentLead): '+ request.get(currentLead));
+                system.debug('leadContMap.get(currentLead): '+ request.get(currentLead.id));
                 
                 Leadconvert.setContactId(acr.contact.id);
                 
                 
-                Leadconvert.setLeadId(currentlead.id);                
+                Leadconvert.setLeadId(currentlead.id);
+
+				
+                system.debug('acr.contact.id: '+ acr.contact.id);   
+                
                 Leadconvert.setAccountId(currentlead.Account__c);
+                
+                system.debug('currentlead.Account__c: '+ currentlead.Account__c); 
+                
                 Leadconvert.setConvertedStatus(CLeadStatus.MasterLabel);
                 Leadconvert.setOpportunityName(acr.oppName);
+                
+                system.debug('acr.oppName: '+ acr.oppName); 
                 MassLeadconvert.add(Leadconvert);
                 
             }
             
             
             if (!MassLeadconvert.isEmpty()) {
-                //List<Database.LeadConvertResult> lcr = Database.convertLead(MassLeadconvert);
-                //
+                
+                List<Database.LeadConvertResult> lcr = Database.convertLead(MassLeadconvert);
+                
                 system.debug('Leads Converted');
             }
             
