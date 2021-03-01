@@ -1,55 +1,59 @@
-global class AutoConvertLeads_ContactFlow {
-    
-    global Map<Lead,ID> leadContMap = new Map<Lead,ID>();
-    
-    public List<Contact> contList = new List<Contact>();
-    
-    public List<Lead> leadList = new List<Lead>();
-    
-    public string oppName;
+global class AutoConvertLeads_ContactFlow implements Database.Batchable<SObject>{
     
     
-    global AutoConvertLeads_ContactFlow(List<Lead> leadList, List<Contact> contList, String oppName, Map<Lead,ID> leadContMap){
-        
-        this.leadList = leadList;
-        this.contList = contList;
-        this.oppName = oppName;
-        this.leadContMap = leadContMap;
-        
-        
+    public AutoConvertLeads_ContactFlow(Map<ID,AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest> request){
+        this.request = request;
     }
     
     
-    global static void convertLead(Map<Lead,ID> leadContMap, String oppName){
+    global Database.QueryLocator start(Database.BatchableContext bc){
+        
+        SET<ID> leadList = request.keySet();
+        
+        String lead = 'SELECT ID FROM LEAD WHERE Id IN :cmRequestMapSet';
+        
+        
+        return Database.getQueryLocator(lead);
+    }
+    
+    
+    global void execute(Database.BatchableContext bc, List<Lead> scope){
         
         
         try{
+            
+            
+            
             LeadStatus CLeadStatus = [SELECT Id, MasterLabel FROM LeadStatus WHERE IsConverted=true Limit 1];
             List<Database.LeadConvert> MassLeadconvert = new List<Database.LeadConvert>();
             
-            for(Lead currentLead : leadContMap.keySet()){
+            for(Lead currentLead : scope){
+                
+                AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest acr = request.get(currentLead);
                 
                 system.debug('currentLead: '+ currentLead);
                 
                 Database.LeadConvert Leadconvert = new Database.LeadConvert();
                 
                 
-                system.debug('leadContMap.get(currentLead): '+ leadContMap.get(currentLead));
+                system.debug('leadContMap.get(currentLead): '+ request.get(currentLead));
                 
-                Leadconvert.setContactId(leadContMap.get(currentLead));
+                Leadconvert.setContactId(acr.contact.id);
                 
                 
                 Leadconvert.setLeadId(currentlead.id);                
                 Leadconvert.setAccountId(currentlead.Account__c);
                 Leadconvert.setConvertedStatus(CLeadStatus.MasterLabel);
-                Leadconvert.setOpportunityName(oppName);
+                Leadconvert.setOpportunityName(acr.oppName);
                 MassLeadconvert.add(Leadconvert);
                 
             }
             
             
             if (!MassLeadconvert.isEmpty()) {
-                List<Database.LeadConvertResult> lcr = Database.convertLead(MassLeadconvert);
+                //List<Database.LeadConvertResult> lcr = Database.convertLead(MassLeadconvert);
+                //
+                system.debug('Leads Converted');
             }
             
             
@@ -65,6 +69,11 @@ global class AutoConvertLeads_ContactFlow {
             
         }
         
+    }
+    
+    global void finish(Database.BatchableContext bc){
+        
+        system.debug('leads converted');
     }
     
     public static void errorHandler(String sub, String body){
