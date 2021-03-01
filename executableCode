@@ -1,0 +1,15 @@
+List<AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest> aclList = new List<AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest>();
+
+AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest acl = new AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest();
+
+acl.leadToConvert = [SELECT ID, Account__c FROM Lead WHERE ID = '00Q2i00000IWhQvEAL' LIMIT 1];
+
+acl.contact = [SELECT ID FROM Contact WHERE ID = '0034100000RPcULAA1' LIMIT 1];
+
+acl.oppName = 'My Test Opp';
+
+acl.automationName = 'Auto Convert Lead From Lead Flow';
+
+aclList.add(acl);
+
+AutoConvertLeads_Invocable.autoConvertLead(aclList);
