@@ -1,0 +1,177 @@
+@isTest
+public class Test_InvocableAutoConvertLeads {
+    
+    @testSetup 
+    public static void setupTests(){
+        
+        List<Lead> leadList = new List<Lead>();
+        
+        Account acct = new Account(Name = 'Test Account', Test_Account__c = TRUE);
+        
+        insert acct;
+        
+        Lead lead = new Lead(FirstName = 'Test', LastName = 'Sam45', Company = 'Test', 	MQL_Reason__c = 'test', Windows_Devices__c = 0);
+        
+        Lead lead2 = new Lead(FirstName = 'Test', LastName = 'Sam46', Company = 'Test', MQL_Reason__c = 'Pear Deck', Windows_Devices__c = 0);
+        
+        Lead leadForContactFlow = new Lead(FirstName = 'Test', LastName = 'Contactflow', Company = 'Test Account', Account__c = acct.id, Windows_Devices__c = 0);
+        
+        Lead leadForContactFlow2 = new Lead(FirstName = 'Test', LastName = 'Contactflow2', Company = 'Test Account', Windows_Devices__c = 0);
+        
+        
+        Contact cont = new Contact(FirstName = 'Test', LastName = 'Contactflow', AccountId = acct.id);
+        
+        insert cont;
+        
+        
+        
+        
+        leadList.add(lead);
+        leadList.add(lead2);
+        leadList.add(leadForContactFlow);
+        leadList.add(leadForContactFlow2);
+        
+        insert leadList;
+        
+        
+        
+    }
+    
+    
+    
+    public static testMethod void Test_InvocableAutoConvertMethod() {
+        
+        
+        Test.startTest();
+        
+        List<Lead> leadList = new List<Lead>();
+        
+        Lead getLead = [Select Id, Name, Lead_Validity__c, Account__c, MQL_Reason__c FROM  Lead WHERE LastName = 'Sam45' LIMIT 1];
+        
+        List<AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest> request = new List<AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest>();
+        
+        AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest acr = new AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest();
+        
+        acr.leadToConvert = getLead;
+        acr.contact = NULL;
+        acr.oppName = NULL;
+        acr.automationName = 'Auto Convert Open Pipeline Lead';
+        
+        
+        request.add(acr);
+        
+        AutoConvertLeads_Invocable.autoConvertLead(request);
+        
+        
+        
+        Test.stopTest();
+        
+        
+        
+    }
+    
+    public static testMethod void Test_InvocableAutoConvertMethod_ExcluedPearDeck() {
+        
+        
+        Test.startTest();
+        
+        List<Lead> leadList = new List<Lead>();
+        
+        Lead getLead = [Select Id, Name, Lead_Validity__c, Account__c, MQL_Reason__c FROM  Lead WHERE LastName = 'Sam46' LIMIT 1];
+        
+        List<AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest> request = new List<AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest>();
+        
+        AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest acr = new AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest();
+        
+        acr.leadToConvert = getLead;
+        acr.contact = NULL;
+        acr.oppName = NULL;
+        acr.automationName = 'Auto Convert Open Pipeline Lead';
+        
+        
+        request.add(acr);
+        
+        AutoConvertLeads_Invocable.autoConvertLead(request);
+        
+        
+        
+        Test.stopTest();
+        
+        
+        
+    }
+    
+    
+    public static testMethod void Test_ConvertLeadFromContactFlow() {
+        
+        
+        Test.startTest();
+        
+        List<Lead> leadList = new List<Lead>();
+        
+        Lead getLead = [Select Id, Name, Lead_Validity__c, Account__c, MQL_Reason__c FROM  Lead WHERE LastName = 'Contactflow' LIMIT 1];
+        
+        Contact cont = [SELECT ID FROM Contact WHERE LastName = 'Contactflow' LIMIT 1];
+        
+        String oppName = 'Test Opp';
+        
+        List<AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest> request = new List<AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest>();
+        
+        AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest acr = new AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest();
+        
+        acr.leadToConvert = getLead;
+        acr.contact = cont;
+        acr.oppName = oppName;
+        acr.automationName = 'Auto Convert Lead From Lead Flow';
+        
+        
+        request.add(acr);
+        
+        AutoConvertLeads_Invocable.autoConvertLead(request);
+        
+        
+        
+        Test.stopTest();
+        
+        
+        
+    }
+    
+    
+        public static testMethod void Test_ConvertLeadFromContactFlow_Error() {
+        
+        
+        Test.startTest();
+        
+        List<Lead> leadList = new List<Lead>();
+        
+        Lead getLead = [Select Id, Name, Lead_Validity__c, Account__c, MQL_Reason__c FROM  Lead WHERE LastName = 'Contactflow2' LIMIT 1];
+        
+        Contact cont = [SELECT ID FROM Contact WHERE LastName = 'Contactflow' LIMIT 1];
+        
+        String oppName = 'Test Opp';
+        
+        List<AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest> request = new List<AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest>();
+        
+        AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest acr = new AutoConvertLeads_Invocable.AutoConvertLeadInvocableRequest();
+        
+        acr.leadToConvert = getLead;
+        acr.contact = cont;
+        acr.oppName = oppName;
+        acr.automationName = 'Auto Convert Lead From Lead Flow';
+        
+        
+        request.add(acr);
+        
+        AutoConvertLeads_Invocable.autoConvertLead(request);
+        
+        
+        
+        Test.stopTest();
+        
+        
+        
+    }
+    
+    
+}
